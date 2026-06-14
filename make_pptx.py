@@ -22,7 +22,7 @@ def main():
     title = slide.shapes.title
     subtitle = slide.placeholders[1]
     title.text = "CSL6010-Cybersecurity Major Project:\nEyes on Your Typing & CASOM Defense"
-    subtitle.text = "Analysis of SNOOPFINGER Attack and Proposed Middleware\nBy: Group of 7 Members"
+    subtitle.text = "Analysis of SNOOPFINGER Attack and Proposed Middleware\nBy: Group of 7 Members\nRepository: https://github.com/AzDevops143/CSIEEE"
 
     # Slide 1: Introduction (SNOOPFINGER Attack)
     bullet_slide_layout = prs.slide_layouts[1]
@@ -156,6 +156,9 @@ def main():
     p.level = 1
     p = tf.add_paragraph()
     p.text = "As proven in our simulation, the attacker infers the exact word when unprotected, but infers useless gibberish when CASOM is active."
+    p.level = 1
+    p = tf.add_paragraph()
+    p.text = "Project Repository: https://github.com/AzDevops143/CSIEEE"
     p.level = 1
 
     prs.save("Cybersecurity_Major_Project.pptx")
