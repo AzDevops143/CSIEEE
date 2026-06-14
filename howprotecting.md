@@ -105,11 +105,28 @@ def obfuscate_data(self, gaze_points):
 
 ## 6. How it Thwarts the Attacker
 
-The diagram below shows how the raw clustered coordinates are scrambled, preventing the attacker from finding the true centroids:
+The diagram below illustrates how raw coordinate clusters are processed by the attacker in both unprotected and protected scenarios, demonstrating why the defense is successful:
 
 ```mermaid
-grid-layout
-    %% Conceptual representation of coordinate scattering
+flowchart TD
+    subgraph Scenario_1 [Unprotected Scenario: Raw Coordinates]
+        direction TB
+        A1["Raw Gaze Points: <br> (2.05, 1.01), (1.98, 0.98), (2.02, 1.02)"] --> B1["Temporal Cluster Centroid: <br> (2.01, 1.00)"]
+        B1 --> C1["Distance Lookup: <br> Key 'F' (2.0, 1.0) is closest"]
+        C1 --> D1["Inferred Character: 'F'"]
+    end
+    
+    subgraph Scenario_2 [Protected Scenario: CASOM Active]
+        direction TB
+        A2["Raw Gaze Points: <br> (2.05, 1.01), (1.98, 0.98), (2.02, 1.02)"] --> B2["CASOM: Inject Laplacian Noise <br> (scale = 1.5)"]
+        B2 --> C2["Scattered Points: <br> (3.11, 2.22), (0.88, -0.45), (2.95, 1.85)"]
+        C2 --> D2["No Coherent Cluster / Shuffled Centroids"]
+        D2 --> E2["Distance Lookups: <br> Keys 'R', 'C', 'V'"]
+        E2 --> F2["Inferred Characters: Shuffled <br> (Gibberish Output)"]
+    end
+
+    style Scenario_1 fill:#e6ffe6,stroke:#333
+    style Scenario_2 fill:#ffe6e6,stroke:#333
 ```
 
 - **Unprotected**: Points form a tight cluster centered at `x = 2.0, y = 1.0` (Key: `F`). The centroid calculation points directly to `F`.
