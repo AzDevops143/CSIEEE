@@ -50,24 +50,14 @@ The dataset's parameters were derived directly from the empirical observations a
 
 ## 3. Code Implementation Summary
 
-The data generation process is fully implemented in [generator.py](file:///d:/CS%20IEEE/CSIEEE/generator.py) via the `generate_gaze_points` function:
+The data generation process is fully implemented in [create_dataset.py](file:///d:/CS%20IEEE/CSIEEE/create_dataset.py) via the `create_vr_telemetry` function:
 
 ```python
-def generate_gaze_points(word, keyboard_layout, samples_per_char=25, noise_std=0.15):
+def create_vr_telemetry(word, filename="vr_telemetry_dataset.csv", noise_level=0.15):
     """
-    Generates simulated gaze points at a frequency representing Oculus Quest 2 (72 Hz)
-    typing behavior, adding physiological targeting jitter.
+    Generates a realistic mock dataset mimicking Oculus Quest 2 telemetry at 72 Hz.
+    Writes the data to a CSV file.
     """
-    gaze_points = []
-    for char in word:
-        if char in keyboard_layout:
-            target_x, target_y = keyboard_layout[char]
-            # Generate clustered points representing key focus/dwell time
-            for _ in range(samples_per_char):
-                noise_x = random.gauss(0, noise_std)
-                noise_y = random.gauss(0, noise_std)
-                gaze_points.append((target_x + noise_x, target_y + noise_y))
-    return gaze_points
 ```
 
-By generating data using these precise parameters, the simulation accurately represents the threat surface described in the paper, making it a valid environment for testing the CASOM defense.
+By mathematically generating data using these precise parameters, the script produces a highly realistic `vr_telemetry_dataset.csv` file. This allows our `main.py` simulation to accurately represent the threat surface described in the paper by reading external "raw" data, making it a valid environment for testing the CASOM defense.

@@ -67,7 +67,7 @@ flowchart TD
 
 ## 4. Empirical Proof: Simulation Results
 
-To validate the defense, we ran an end-to-end Python simulation using the word `"foxenter"`. 
+To validate the defense, we generated a highly realistic Oculus Quest 2 `.csv` telemetry dataset representing a user typing the word `"foxenter"` at 72 Hz. We then passed this dataset through our middleware. 
 
 The results below show how the attacker performs on unprotected (raw) data versus protected (obfuscated) data:
 

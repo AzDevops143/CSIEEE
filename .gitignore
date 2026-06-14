@@ -6,3 +6,7 @@
 
 # Temporary equation images generated for PPTX
 eq*.png
+
+# Dataset files
+*.csv
+__pycache__/

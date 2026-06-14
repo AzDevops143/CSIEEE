@@ -64,23 +64,25 @@ The solution is implemented as a modular Python simulation simulating both the a
 
 ```mermaid
 flowchart LR
-    A[Keyboard Layout <br> keyboard.py] --> B[Data Generator <br> generator.py]
-    B --> C{Defense State}
-    C -- Unprotected --> D[Attacker <br> attacker.py]
-    C -- Protected --> E[CASOM Middleware <br> defender.py]
-    E --> D
-    D --> F[Inference Result]
+    A[Keyboard Layout <br> keyboard.py] --> B[Data Generator <br> create_dataset.py]
+    B --> |Outputs| C[(vr_telemetry_dataset.csv)]
+    C --> D{Defense State <br> main.py}
+    D -- Unprotected --> E[Attacker <br> attacker.py]
+    D -- Protected --> F[CASOM Middleware <br> defender.py]
+    F --> E
+    E --> G[Inference Result]
     
-    style E fill:#9f9,stroke:#333
-    style D fill:#f99,stroke:#333
+    style F fill:#9f9,stroke:#333
+    style E fill:#f99,stroke:#333
+    style C fill:#f9f,stroke:#333
 ```
 
 ### Module Breakdown:
 1. **`keyboard.py`**: Defines the standard 2D layout and coordinates of a virtual QWERTY keyboard.
-2. **`generator.py`**: Simulates the gaze points of a user typing a word, modeling natural human movement and precision errors.
+2. **`create_dataset.py`**: Generates the `vr_telemetry_dataset.csv` file, simulating 72 Hz VR telemetry tracking data.
 3. **`attacker.py`**: Simulates SNOOPFINGER using a temporal distance clustering algorithm to infer keystrokes.
 4. **`defender.py`**: Implements CASOM, injecting Laplacian noise ($\mu = 0, b = 1.5$) to obfuscate the data.
-5. **`main.py`**: Orchestrates the simulation, running both protected and unprotected modes, and generates a side-by-side plot of results.
+5. **`main.py`**: Orchestrates the simulation by reading the `.csv` dataset, running both protected and unprotected modes, and generating a side-by-side plot of results.
 
 ---
 

@@ -1,6 +1,6 @@
 # main.py
+import csv
 import matplotlib.pyplot as plt
-from generator import HeadMovementSimulator
 from attacker import SnoopfingerAttacker
 from defender import CASOMMiddleware
 from keyboard import KEYBOARD_LAYOUT
@@ -48,11 +48,21 @@ def plot_simulation(original_points, obfuscated_points, word):
 
 def main():
     target_word = "foxenter"
+    dataset_file = "vr_telemetry_dataset.csv"
     
-    # 1. Simulate user typing
-    simulator = HeadMovementSimulator(noise_level=0.15)
-    print(f"[*] Simulating user typing: '{target_word}'")
-    raw_gaze_points = simulator.simulate_typing(target_word)
+    # 1. Read raw gaze points from the mock dataset CSV
+    print(f"[*] Reading raw VR telemetry from '{dataset_file}'...")
+    raw_gaze_points = []
+    try:
+        with open(dataset_file, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                # The attacker isolates the "dwell" points where typing occurs
+                if row['is_typing'] == 'True':
+                    raw_gaze_points.append((float(row['x']), float(row['y'])))
+    except FileNotFoundError:
+        print(f"[!] Error: Dataset file '{dataset_file}' not found. Please run 'python create_dataset.py' first.")
+        return
     
     # 2. Attacker tries to infer the word from raw data
     attacker = SnoopfingerAttacker(cluster_threshold=0.8)
