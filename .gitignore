@@ -10,3 +10,6 @@ eq*.png
 # Dataset files
 *.csv
 __pycache__/
+
+report.tex
+make_pptx.py
