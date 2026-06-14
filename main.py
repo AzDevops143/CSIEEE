@@ -1,5 +1,6 @@
 # main.py
 import csv
+import sys
 import matplotlib.pyplot as plt
 from attacker import SnoopfingerAttacker
 from defender import CASOMMiddleware
@@ -47,7 +48,7 @@ def plot_simulation(original_points, obfuscated_points, word):
 
 
 def main():
-    target_word = "foxenter"
+    target_word = sys.argv[1] if len(sys.argv) > 1 else "foxenter"
     dataset_file = "vr_telemetry_dataset.csv"
     
     # 1. Read raw gaze points from the mock dataset CSV

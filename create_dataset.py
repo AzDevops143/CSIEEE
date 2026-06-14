@@ -1,6 +1,7 @@
 # create_dataset.py
 import csv
 import random
+import sys
 from keyboard import KEYBOARD_LAYOUT
 
 def create_vr_telemetry(word, filename="vr_telemetry_dataset.csv", noise_level=0.15):
@@ -43,6 +44,6 @@ def create_vr_telemetry(word, filename="vr_telemetry_dataset.csv", noise_level=0
 
 if __name__ == "__main__":
     # Generate a dataset for testing the attack and defense
-    target_word = "foxenter"
+    target_word = sys.argv[1] if len(sys.argv) > 1 else "foxenter"
     print(f"[*] Generating VR telemetry dataset for target word: '{target_word}'...")
     create_vr_telemetry(target_word)
