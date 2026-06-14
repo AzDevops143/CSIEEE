@@ -1,0 +1,107 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{\textbf{CSL6010-Cybersecurity Major Project Report}\\
+\Large Eyes on Your Typing Analysis and CASOM Defense}
+\author{Team of 7 Members}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+The rapid growth of Augmented Reality (AR) and Virtual Reality (VR) technologies has introduced immersive digital experiences. Within these environments, virtual keyboards are emerging as a primary input method. However, this direct hand-based typing introduces security vulnerabilities. The ``Eyes on Your Typing: Snooping Finger Motions on Virtual Keyboards'' (SNOOPFINGER) paper demonstrates that subtle head movements occurring during typing can unintentionally reveal private information. This report analyzes the SNOOPFINGER attack, identifies its limitations, and proposes a novel software-based countermeasure.
+
+\section{Problem Analysis: The SNOOPFINGER Attack}
+SNOOPFINGER is a cross-modality side-channel attack that leverages zero-permission sensor data (specifically, head orientation and position) to estimate typed inputs on a virtual keyboard. 
+
+\subsection{Mathematical Background}
+The attack converts the headset's quaternion orientation $(w, x, y, z)$ into Euler angles (Roll $\phi$, Pitch $\theta$, Yaw $\psi$) to determine gaze direction:
+
+\begin{align}
+\phi &= \arctan\left(\frac{2(wx+yz)}{1-2(x^2+y^2)}\right) \\
+\theta &= \arcsin(2(wy - zx)) \\
+\psi &= \arctan\left(\frac{2(wz+xy)}{1-2(y^2+z^2)}\right)
+\end{align}
+
+These 3D gaze directions are then projected onto a 2D plane (the virtual keyboard) using Equirectangular projection:
+
+\begin{align}
+r_i &= \sqrt{x_i^2 + y_i^2 + z_i^2} \\
+\theta_i &= \arctan\left(\frac{z_i}{x_i}\right) \\
+\phi_i &= \arcsin\left(\frac{y_i}{r_i}\right)
+\end{align}
+
+By clustering these 2D points temporally, the attacker can infer which keys were pressed based on standard keyboard layout geometries.
+
+\section{Identified Gaps and Limitations}
+While the attack achieves high accuracy (up to 55.2\% for top-1 word inference), it has notable limitations:
+\begin{itemize}
+    \item \textbf{Data Requirement}: It relies heavily on high-fidelity, high-frequency (e.g., 72 Hz) sensor data.
+    \item \textbf{Awareness Vulnerability}: If a user is aware of the attack and consciously minimizes head movement, the attack fails.
+\end{itemize}
+The primary gap is that while the paper suggests countermeasures like \textit{Adaptive Sensor Data Obfuscation}, it does not provide an architectural implementation or evaluate its effectiveness.
+
+\section{Proposed Solution: CASOM Middleware}
+We propose the \textbf{Context-Aware Sensor Obfuscation Middleware (CASOM)}. This middleware acts as a protective layer between the OS Sensor Manager and background applications. 
+
+\subsection{Architecture Diagram}
+The architecture of our proposed solution is illustrated below using a TikZ flowchart.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    node distance=2cm,
+    box/.style={rectangle, rounded corners, draw=black, top color=white, bottom color=blue!10, very thick, text width=4cm, align=center, minimum height=1.5cm},
+    decision/.style={diamond, draw=black, top color=white, bottom color=red!10, very thick, text width=2.5cm, align=center},
+    arrow/.style={thick,->,>=stealth}
+]
+
+% Nodes
+\node (sensor) [box] {AR/VR Headset\\Sensors};
+\node (detect) [decision, below=of sensor] {Typing\\Detected?};
+\node (obfuscate) [box, below left=1.5cm and 0.5cm of detect] {Data Obfuscation\\(Add Noise)};
+\node (passthrough) [box, below right=1.5cm and 0.5cm of detect] {Pass-through\\(Raw Data)};
+\node (bgapps) [box, below=4cm of detect] {Background Apps\\(e.g., Attacker)};
+\node (fgapp) [box, right=of sensor] {Foreground App\\(Virtual Keyboard)};
+
+% Arrows
+\draw [arrow] (sensor) -- (detect);
+\draw [arrow] (sensor) -- (fgapp);
+\draw [arrow] (detect) -| node[anchor=south] {Yes} (obfuscate);
+\draw [arrow] (detect) -| node[anchor=south] {No} (passthrough);
+\draw [arrow] (obfuscate) |- (bgapps);
+\draw [arrow] (passthrough) |- (bgapps);
+
+\end{tikzpicture}
+\caption{CASOM Architecture Flowchart}
+\label{fig:architecture}
+\end{figure}
+
+As shown in Figure \ref{fig:architecture}, when typing is detected, CASOM injects dynamic Laplacian noise into the data stream before passing it to background applications. The foreground application (the virtual keyboard) continues to receive raw data, ensuring usability is not impacted.
+
+\section{Implementation and Results}
+We implemented a Python simulation to validate the CASOM middleware.
+\begin{itemize}
+    \item \textbf{Generator Module}: Simulates head movements tracking standard virtual keyboard keys with minor natural noise.
+    \item \textbf{Attacker Module}: Clusters temporal gaze points to infer text.
+    \item \textbf{Defender Module}: Injects Laplacian noise (scale = 1.5) when typing is detected.
+\end{itemize}
+
+\textbf{Results}: In the unprotected simulation, the attacker accurately reconstructed the word 'foxenter'. When CASOM was active, the attacker's clustering algorithm failed completely, inferring random gibberish ('zrf'). This confirms that dynamically obfuscating zero-permission sensor data is a viable and effective defense against the SNOOPFINGER side-channel attack.
+
+\section{Conclusion}
+The SNOOPFINGER attack highlights critical vulnerabilities in the permission models of modern AR/VR systems. Our software-based implementation of the Context-Aware Sensor Obfuscation Middleware proves that introducing targeted noise can successfully thwart these attacks without compromising the user experience of foreground applications.
+
+\end{document}
