@@ -4,18 +4,31 @@ This document describes the operational flow and mechanism of the **Context-Awar
 
 ---
 
-## 1. Operational Flow Overview
+## 1. Operational Flow & Architecture
 
-The protection operates as an OS-level service in the AR/VR platform, executing in three consecutive phases:
+The protection operates as an OS-level middleware service in the AR/VR system. Below is the technical architecture showing the data routing and the security boundary:
 
 ```mermaid
 flowchart TD
-    A[Phase 1: Context Detection] --> B[Phase 2: Stream Bifurcation]
-    B --> C[Phase 3: Obfuscation Engine]
+    A[AR/VR Headset Sensor Hardware <br> IMU, Cameras, Quaternions] --> B[OS Sensor Manager]
     
-    style A fill:#dff,stroke:#333
-    style B fill:#ffd,stroke:#333
-    style C fill:#fdf,stroke:#333
+    subgraph CASOM [CASOM Middleware Protection Layer]
+        B --> C{Context Analyzer <br> Is Typing Active?}
+        C -- YES --> D[Stream Bifurcator / Router]
+        C -- NO --> E[Pass-through Mode]
+        
+        D -->|Route A: Foreground| F[Clean High-Fidelity Data Stream]
+        D -->|Route B: Background| G[Obfuscation Engine <br> Inject Laplacian Noise]
+    end
+    
+    F --> H[Foreground App <br> Virtual Keyboard]
+    G --> I[Background App <br> Malicious Keystroke Logger]
+    E --> I
+    
+    style CASOM fill:#f5f5f5,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style G fill:#f9d,stroke:#333,stroke-width:2px
+    style H fill:#bbf,stroke:#333,stroke-width:2px
+    style I fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
 ---
