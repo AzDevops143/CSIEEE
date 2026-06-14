@@ -30,3 +30,11 @@ jobs:
     - name: Run Attack/Defense Simulation
       run: |
         python main.py
+        
+    - name: Upload Simulation Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: simulation-artifacts
+        path: |
+          simulation_result.png
+          vr_telemetry_dataset.csv
