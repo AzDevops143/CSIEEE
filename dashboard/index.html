@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SNOOPFINGER Attack & CASOM Defense Simulator</title>
+  <meta name="description" content="An interactive simulation of the SNOOPFINGER side-channel attack in AR/VR environments and the Context-Aware Sensor Obfuscation Middleware (CASOM) defense.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Header Section -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo" aria-hidden="true">C</div>
+        <div>
+          <h1 class="brand-title" id="main-title">CASOM Middleware Simulator</h1>
+          <p class="brand-subtitle">CSL6010-Cybersecurity Major Project</p>
+        </div>
+      </div>
+      <div class="meta-info">
+        <span class="badge badge-blue">Oculus Quest 72Hz Telemetry</span>
+        <span class="badge badge-green">CASOM Active</span>
+      </div>
+    </header>
+
+    <!-- Main Layout Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Sidebar Panel: Control Center -->
+      <aside class="control-sidebar card" aria-labelledby="controls-heading">
+        <h2 class="card-title" id="controls-heading">Simulation Settings</h2>
+        
+        <!-- Target Word Input -->
+        <div class="form-group">
+          <label for="target-word">Target Word to Type:</label>
+          <input type="text" id="target-word" class="input-control" value="foxenter" maxlength="15" placeholder="e.g. hello">
+        </div>
+
+        <!-- Noise Scale Slider -->
+        <div class="form-group">
+          <label for="noise-scale">CASOM Noise Scale (b):</label>
+          <div class="slider-container">
+            <input type="range" id="noise-scale" min="0.1" max="4.0" step="0.1" value="1.5">
+            <span class="slider-value" id="noise-scale-val">1.5</span>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Laplacian scale factor added to head rotation sensors.</span>
+        </div>
+
+        <!-- Attacker Settings -->
+        <div class="form-group">
+          <label for="cluster-threshold">Clustering Threshold:</label>
+          <div class="slider-container">
+            <input type="range" id="cluster-threshold" min="0.2" max="2.0" step="0.1" value="0.8">
+            <span class="slider-value" id="cluster-threshold-val">0.8</span>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Max distance for consecutive points in a keypress cluster.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="key-map-threshold">Key Mapping Radius:</label>
+          <div class="slider-container">
+            <input type="range" id="key-map-threshold" min="0.3" max="1.5" step="0.1" value="0.6">
+            <span class="slider-value" id="key-map-threshold-val">0.6</span>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Max offset radius to map centroids to keyboard keys.</span>
+        </div>
+
+        <!-- Defense Mode Toggle -->
+        <div class="form-group">
+          <div class="switch-container">
+            <span style="font-size: 0.875rem; font-weight: 500;">Reduce Float Precision</span>
+            <label class="switch" for="defense-mode">
+              <input type="checkbox" id="defense-mode">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">If enabled, rounds coordinates to integers instead of adding noise.</span>
+        </div>
+
+        <!-- Run Trigger -->
+        <div class="form-group" style="margin-top: 12px;">
+          <button type="button" id="btn-run" class="btn btn-primary">
+            <span>Play Simulation</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Visualizers & Metrics -->
+      <main class="main-content">
+        
+        <!-- Metrics Cards -->
+        <section class="stats-row" aria-label="Real-time Metrics">
+          <!-- Card 1: Target Word -->
+          <div class="stat-card">
+            <span class="stat-label">Target Text</span>
+            <span class="stat-value" id="stat-target">foxenter</span>
+            <span class="stat-desc">User input word</span>
+          </div>
+          
+          <!-- Card 2: Unprotected Attack -->
+          <div class="stat-card">
+            <span class="stat-label">Raw Attacker Result</span>
+            <span class="stat-value red" id="stat-raw-word">foxenter</span>
+            <span class="stat-desc" id="stat-raw-status">100% Successful</span>
+          </div>
+
+          <!-- Card 3: Defense Status -->
+          <div class="stat-card">
+            <span class="stat-label">CASOM Defense</span>
+            <span class="stat-value green" id="stat-protected-status">Defeated (0%)</span>
+            <span class="stat-desc">Laplacian Obfuscation</span>
+          </div>
+
+          <!-- Card 4: Protected Attack -->
+          <div class="stat-card">
+            <span class="stat-label">Protected Attacker Result</span>
+            <span class="stat-value" id="stat-protected-word">zrf</span>
+            <span class="stat-desc">Background app logs</span>
+          </div>
+        </section>
+
+        <!-- Dynamic Keyboards Visualization -->
+        <section class="simulator-panel" aria-label="Side-by-Side Simulation Visualizers">
+          
+          <!-- Left Panel: Unprotected -->
+          <div class="card visualizer-card">
+            <div class="visualizer-header">
+              <h3 class="visualizer-title">Unprotected: Raw Telemetry Gaze Path</h3>
+              <span class="badge badge-red">Vulnerable</span>
+            </div>
+            
+            <div class="keyboard-wrapper">
+              <div id="raw-keyboard" class="keyboard-container"></div>
+              <canvas id="raw-canvas" class="canvas-overlay"></canvas>
+            </div>
+
+            <div class="legend-container">
+              <div class="legend-item">
+                <span class="legend-color" style="background-color: #ef4444;"></span>
+                <span>Dwell Point (Active Typing)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="background-color: rgba(148, 163, 184, 0.5);"></span>
+                <span>Travel Point (Moving cursor)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-line" style="border-top: 2px solid rgba(239, 68, 68, 0.4);"></span>
+                <span>Gaze Path</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="border: 2px solid #b91c1c; background: transparent; width: 12px; height: 12px;"></span>
+                <span>Attacker Key Centroid</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: Protected -->
+          <div class="card visualizer-card">
+            <div class="visualizer-header">
+              <h3 class="visualizer-title">Protected: CASOM Obfuscated Stream</h3>
+              <span class="badge badge-green">Secured</span>
+            </div>
+            
+            <div class="keyboard-wrapper">
+              <div id="prot-keyboard" class="keyboard-container"></div>
+              <canvas id="prot-canvas" class="canvas-overlay"></canvas>
+            </div>
+
+            <div class="legend-container">
+              <div class="legend-item">
+                <span class="legend-color" style="background-color: #2563eb;"></span>
+                <span>Obfuscated Point</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="background-color: rgba(148, 163, 184, 0.5);"></span>
+                <span>Travel Point</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-line" style="border-top: 2px solid rgba(37, 99, 235, 0.3);"></span>
+                <span>Scattered Gaze Path</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="border: 2px solid #1d4ed8; background: transparent; width: 12px; height: 12px;"></span>
+                <span>Reconstructed Centroid</span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Theoretical Overview / Explanation -->
+        <section class="card" aria-labelledby="explanation-heading">
+          <h3 class="card-title" id="explanation-heading" style="margin-bottom: 12px;">Academic Context & Background</h3>
+          <div class="info-section">
+            <p class="info-text">
+              <strong>SNOOPFINGER</strong> is a cross-modality side-channel attack targeting head-mounted displays (HMDs) in VR and AR environments. When users type on virtual keyboards, subtle head movement occurs as they visually confirm keys. Background applications can continuously access head orientation sensors without any security permissions, collecting high-frequency gaze coordinates.
+            </p>
+            <p class="info-text">
+              To mitigate this, we present the <strong>Context-Aware Sensor Obfuscation Middleware (CASOM)</strong>. By monitoring typing states, it detects keyboard interactions. When active, it adds Laplacian noise ($\mu = 0, b$) to the coordinate stream sent to background threads, scattering the gaze cluster points:
+            </p>
+            <div style="font-family: monospace; text-align: center; background-color: var(--bg-app); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin: 10px 0;">
+              x_{obf} = x_{raw} + Laplace(0, b)
+            </div>
+            <p class="info-text">
+              The attacker relies on spatial clustering (finding where points linger near key centers) to reconstruct the keystrokes. As shown above, adding noise scatters the centroids outside the key mapping radius, dropping the attacker's reconstruction success to 0% while preserving foreground usability.
+            </p>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
