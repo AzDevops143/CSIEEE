@@ -1,0 +1,56 @@
+name: SnoopFinger Attack/Defense Evaluation
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      trials:
+        description: 'Trials per word for the BackTree evaluation'
+        required: false
+        default: '30'
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg          # headless matplotlib for CI
+      TRIALS: ${{ inputs.trials }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Sanity check (original single-word demo)
+        run: |
+          python create_dataset.py foxenter
+          python main.py foxenter
+
+      - name: Character-level benchmark (naive vs adaptive attacker)
+        run: python benchmark.py
+
+      - name: Word-level BackTree evaluation (paper metric)
+        run: python run_backtree_eval.py --trials "${TRIALS:-30}"
+
+      - name: Upload result artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: |
+            benchmark_result.png
+            backtree_result.png
+            simulation_result.png
+            vr_telemetry_dataset.csv
+          if-no-files-found: warn
