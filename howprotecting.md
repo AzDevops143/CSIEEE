@@ -1,4 +1,4 @@
-# CASOM: How the Protection Works
+# CASOM: How the Protection Works (v2)
 
 This document describes the operational flow and mechanism of the **Context-Aware Sensor Obfuscation Middleware (CASOM)**, illustrating how it defends against side-channel virtual keystroke attacks like SNOOPFINGER.
 
@@ -18,7 +18,7 @@ flowchart TD
         C -- NO --> E[Pass-through Mode]
         
         D -->|Route A: Foreground| F[Clean High-Fidelity Data Stream]
-        D -->|Route B: Background| G[Obfuscation Engine <br> Inject Laplacian Noise]
+        D -->|Route B: Background| G[Obfuscation Engine <br> Inject Block Laplace Noise]
     end
     
     F --> H[Foreground App <br> Virtual Keyboard]
@@ -35,10 +35,12 @@ flowchart TD
 
 ## 2. Phase 1: Context-Aware Detection
 
-Obfuscating sensor data continuously would degrade user experience (UX) for regular activities such as playing games, painting, or using VR gestures that require millimeter-level precision.
+> [!NOTE]
+> Obfuscating sensor data continuously would degrade user experience (UX) for regular activities such as playing games, painting, or using VR gestures that require millimeter-level precision.
+>
+> To avoid this, CASOM is **context-aware** and only activates its obfuscation routine when typing is active.
 
-To avoid this, CASOM is **context-aware**:
-- It monitors system events (e.g., when the Virtual Keyboard focus goes high).
+- It monitors system focus events (e.g., when the Virtual Keyboard focus goes high).
 - It analyzes head motion stability. Typing requires focusing on keys, which creates a signature pattern of micro-pauses.
 - Once these triggers are detected, the middleware activates its **obfuscation routine**.
 
@@ -59,46 +61,46 @@ Once typing is detected, CASOM separates the sensor streams between apps based o
 
 ---
 
-## 4. Phase 3: Obfuscation Engine
+## 4. Phase 3: Obfuscation Engine (Block Laplace Noise)
 
 The SNOOPFINGER attack relies on **spatial-temporal clustering**. When a user types, their head pauses on key locations, creating dense clusters of gaze points. The attacker uses distance-based clustering algorithms to calculate the centroids of these clusters and matches them to standard keyboard coordinates.
 
-CASOM destroys this threat mathematically by applying **obfuscation noise** to the background data stream:
-
-### 4.1. The Mathematical Mechanism
-For each coordinate coordinate pair $(x, y)$, CASOM calculates the protected output coordinates $(x', y')$:
+CASOM v2 destroys this threat mathematically by applying **Block Laplace Noise** to the background data stream. Rather than perturbing each frame independently (which can be bypassed by averaging), the middleware shifts each dwell block by a single constant offset drawn from the Laplace distribution:
 
 $$x' = x + \text{Noise}_x$$
 $$y' = y + \text{Noise}_y$$
 
-By setting the noise scale parameter to $1.5$ cm (which is larger than the width of a virtual key), the points are scattered across multiple key boundaries.
+By setting the noise scale parameter to $1.5$ cm (which is larger than the width of a virtual key) and maintaining this offset over blocks of 15 frames, the points are scattered across multiple key boundaries, scrambling key centroids and breaking the relative geometry vectors.
 
 ---
 
 ## 5. Python Implementation Reference
 
-In our codebase, this logic is implemented in [defender.py](file:///d:/CS%20IEEE/CSIEEE/defender.py) inside the `obfuscate_data` method:
+In our codebase, this logic is implemented in [casom_defense.py](file:///d:/CS%20IEEE/CSIEEE/casom_defense.py):
 
 ```python
-def obfuscate_data(self, gaze_points):
-    """
-    Intercepts raw gaze coordinates and injects noise 
-    to scatter the clusters before they reach background apps.
-    """
-    obfuscated_points = []
-    for (x, y) in gaze_points:
-        if self.use_rounding:
-            # Option A: Reduce precision by rounding coordinates
-            ox = round(x)
-            oy = round(y)
-        else:
-            # Option B: Add random noise to scatter points widely
-            ox = x + random.uniform(-self.noise_scale, self.noise_scale)
-            oy = y + random.uniform(-self.noise_scale, self.noise_scale)
-        
-        obfuscated_points.append((ox, oy))
-        
-    return obfuscated_points
+def obfuscate(self, gaze_points, segments=None):
+    if self.mode == "iid":
+        return self._iid(gaze_points)
+    if self.mode == "correlated":
+        return self._correlated(gaze_points)
+    if self.mode == "per_keypress":
+        return self._per_keypress(gaze_points, segments)
+    if self.mode == "block":
+        return self._block(gaze_points)
+    if self.mode == "downsample":
+        return self._downsample(gaze_points)
+    raise ValueError(f"unknown mode: {self.mode}")
+
+def _block(self, pts):
+    out = []
+    ox = oy = 0.0
+    for i, (x, y) in enumerate(pts):
+        if i % self.block_samples == 0:
+            ox = self._laplace(self.noise_scale)
+            oy = self._laplace(self.noise_scale)
+        out.append((x + ox, y + oy))
+    return out
 ```
 
 ---
@@ -116,18 +118,18 @@ flowchart TD
         C1 --> D1["Inferred Character: 'F'"]
     end
     
-    subgraph Scenario_2 [Protected Scenario: CASOM Active]
+    subgraph Scenario_2 [Protected Scenario: CASOM Block Active]
         direction TB
-        A2["Raw Gaze Points: <br> (2.05, 1.01), (1.98, 0.98), (2.02, 1.02)"] --> B2["CASOM: Inject Laplacian Noise <br> (scale = 1.5)"]
-        B2 --> C2["Scattered Points: <br> (3.11, 2.22), (0.88, -0.45), (2.95, 1.85)"]
-        C2 --> D2["No Coherent Cluster / Shuffled Centroids"]
-        D2 --> E2["Distance Lookups: <br> Keys 'R', 'C', 'V'"]
-        E2 --> F2["Inferred Characters: Shuffled <br> (Gibberish Output)"]
+        A2["Raw Gaze Points: <br> (2.05, 1.01), (1.98, 0.98), (2.02, 1.02)"] --> B2["CASOM: Apply Constant Block Offset <br> (ox = 1.34, oy = 0.85)"]
+        B2 --> C2["Obfuscated Points: <br> (3.39, 1.86), (3.32, 1.83), (3.36, 1.87)"]
+        C2 --> D2["Averaged Centroid Shifted: <br> (3.35, 1.85)"]
+        D2 --> E2["Distance Lookups: <br> Centroid maps to 'R' (3.0, 2.0) instead of 'F'"]
+        E2 --> F2["Inferred Characters: Scrambled <br> (Gibberish Output)"]
     end
 
     style Scenario_1 fill:#e6ffe6,stroke:#333
     style Scenario_2 fill:#ffe6e6,stroke:#333
 ```
 
-- **Unprotected**: Points form a tight cluster centered at `x = 2.0, y = 1.0` (Key: `F`). The centroid calculation points directly to `F`.
-- **Protected by CASOM**: Points are dispersed across `x = [0.5, 3.5]` and `y = [-0.5, 2.5]`. The clustering algorithm calculates a false centroid pointing to `R` or `V` (resulting in gibberish character output like `'zrf'`).
+- **Unprotected**: Points form a tight cluster centered at `x = 2.01, y = 1.00` (Key: `F`). The centroid calculation points directly to `F`.
+- **Protected by CASOM**: Points are shifted consistently by the block offset. The resulting centroid is calculated at `x = 3.35, y = 1.85`, which maps to `R` (or another adjacent key), creating complete gibberish (e.g. `'zrf'`). Because the offset is constant across the dwell block, the attacker cannot cancel it out by averaging.

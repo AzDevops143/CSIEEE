@@ -7,13 +7,14 @@ judged by the paper's metric — **word-level Top-1 accuracy**.
 
 ## The flaw in the original defense
 
-The original `defender.py` added independent zero-mean noise to every 72 Hz
-sample. Each keypress dwell holds ~15–35 samples, so an attacker who segments by
-dwell and averages each cluster cancels that noise. The original `main.py` only
-*looked* protected because the noise broke the toy attacker's clustering, not
-because the spatial information was gone. (Secondary issues: it used
-`random.uniform`, not the Laplace noise the docs claimed, and there was no ε /
-sensitivity, so the "differential privacy" label did not hold.)
+> [!WARNING]
+> The original [defender.py](file:///d:/CS%20IEEE/CSIEEE/defender.py) added independent zero-mean noise to every 72 Hz
+> sample. Each keypress dwell holds ~15–35 samples, so an attacker who segments by
+> dwell and averages each cluster cancels that noise. The original [main.py](file:///d:/CS%20IEEE/CSIEEE/main.py) only
+> *looked* protected because the noise broke the toy attacker's clustering, not
+> because the spatial information was gone. (Secondary issues: it used
+> `random.uniform`, not the Laplace noise the docs claimed, and there was no ε /
+> sensitivity, so the "differential privacy" label did not hold.)
 
 ## What the end-to-end test revealed (and corrected)
 
@@ -58,15 +59,12 @@ background stream is perturbed.
 
 ## Files
 
-- `casom_defense.py` — CASOM with modes: `iid`, `correlated`, `per_keypress`,
-  `block` (recommended), `downsample`; real Laplace sampler; back-compat shim.
-- `adaptive_attacker.py` — dwell-aware averaging attacker + ranked candidates.
-- `backtree.py` — faithful BackTree word inference with dictionary ranking.
-- `run_backtree_eval.py` — word-level Top-k evaluation across defenses → table +
-  `backtree_result.png`.
-- `benchmark.py` — character-level naive-vs-adaptive comparison →
-  `benchmark_result.png`.
-- `wordlist.txt` — 8,000 frequency-ranked 3–6 letter words (bundled, no network).
+- [casom_defense.py](file:///d:/CS%20IEEE/CSIEEE/casom_defense.py) — CASOM with modes: `iid`, `correlated`, `per_keypress`, `block` (recommended), `downsample`; real Laplace sampler; back-compat shim.
+- [adaptive_attacker.py](file:///d:/CS%20IEEE/CSIEEE/adaptive_attacker.py) — dwell-aware averaging attacker + ranked candidates.
+- [backtree.py](file:///d:/CS%20IEEE/CSIEEE/backtree.py) — faithful BackTree word inference with dictionary ranking.
+- [run_backtree_eval.py](file:///d:/CS%20IEEE/CSIEEE/run_backtree_eval.py) — word-level Top-k evaluation across defenses → table + `backtree_result.png`.
+- [benchmark.py](file:///d:/CS%20IEEE/CSIEEE/benchmark.py) — character-level naive-vs-adaptive comparison → `benchmark_result.png`.
+- [wordlist.txt](file:///d:/CS%20IEEE/CSIEEE/wordlist.txt) — 8,000 frequency-ranked 3–6 letter words (bundled, no network).
 
 ## Reproduce / CI
 

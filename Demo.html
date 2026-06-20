@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASOM: Context-Aware Sensor Obfuscation Middleware Simulator</title>
+  <meta name="description" content="An interactive academic dashboard demonstrating the SNOOPFINGER side-channel attack in AR/VR and evaluating multiple defense strategies including Block Offset Laplace noise.">
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    /* --- CSS Variables & Themes --- */
+    :root {
+      --bg-base: #0f172a;
+      --bg-surface: rgba(30, 41, 59, 0.7);
+      --bg-card: rgba(15, 23, 42, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(56, 189, 248, 0.4);
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --color-primary: #38bdf8; /* Cyber Blue */
+      --color-primary-rgb: 56, 189, 248;
+      --color-danger: #f43f5e; /* Rose Red */
+      --color-danger-rgb: 244, 63, 94;
+      --color-success: #10b981; /* Emerald Green */
+      --color-success-rgb: 16, 185, 129;
+      --color-warning: #f59e0b; /* Amber */
+      --color-warning-rgb: 245, 158, 11;
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: 'Outfit', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      
+      --shadow-glow-blue: 0 0 20px rgba(56, 189, 248, 0.2);
+      --shadow-glow-red: 0 0 20px rgba(244, 63, 94, 0.25);
+      --shadow-glow-green: 0 0 20px rgba(16, 185, 129, 0.25);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* --- Reset & Global --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding: 0 20px 60px 20px;
+    }
+    
+    /* --- Custom Scrollbar --- */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    a {
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    a:hover {
+      color: #7dd3fc;
+      text-decoration: underline;
+    }
+
+    /* --- App Container --- */
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding-top: 40px;
+    }
+
+    /* --- Header --- */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 40px;
+    }
+    
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .brand-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--color-primary), #0284c7);
+      color: var(--bg-base);
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+    }
+    
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(to right, #ffffff, #e2e8f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .brand-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .meta-badges {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid transparent;
+    }
+    
+    .badge-primary {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--color-primary);
+      border-color: rgba(56, 189, 248, 0.2);
+    }
+    
+    .badge-danger {
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--color-danger);
+      border-color: rgba(244, 63, 94, 0.2);
+    }
+
+    /* --- Main Layout Grid --- */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    
+    @media (max-width: 1100px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* --- Card Style --- */
+    .card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transition: var(--transition);
+    }
+    
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #ffffff;
+      border-left: 3px solid var(--color-primary);
+      padding-left: 12px;
+    }
+
+    /* --- Sidebar Controls --- */
+    .controls-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .input-control, .select-control {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+    
+    .input-control:focus, .select-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .select-control option {
+      background: #1e293b;
+      color: var(--text-primary);
+    }
+
+    /* Sliders */
+    .slider-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+      transition: var(--transition);
+    }
+    
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+    
+    .slider-value {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--color-primary);
+      font-weight: 600;
+      min-width: 32px;
+      text-align: right;
+    }
+    
+    .helper-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), #0284c7);
+      color: var(--bg-base);
+      box-shadow: var(--shadow-glow-blue);
+    }
+    
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    
+    .preset-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition);
+    }
+    
+    .preset-chip:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* --- Stats & Metrics --- */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    
+    @media (max-width: 900px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 500px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 4px;
+      width: 100%;
+    }
+    
+    .metric-card.neutral::before { background: var(--text-muted); }
+    .metric-card.threat::before { background: var(--color-danger); }
+    .metric-card.safe::before { background: var(--color-success); }
+    .metric-card.warning::before { background: var(--color-warning); }
+
+    .metric-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    
+    .metric-value.danger { color: var(--color-danger); }
+    .metric-value.success { color: var(--color-success); }
+    .metric-value.warning { color: var(--color-warning); }
+
+    .metric-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .security-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .security-status-badge.danger {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--color-danger);
+    }
+    .security-status-badge.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--color-warning);
+    }
+    .security-status-badge.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-success);
+    }
+
+    /* --- Visualizers --- */
+    .visualizer-section {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+    
+    @media (max-width: 960px) {
+      .visualizer-section {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .visualizer-card {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .visualizer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .visualizer-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Virtual Keyboard Area */
+    .keyboard-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2.2 / 1; /* Match realistic keyboard dimensions */
+      background: #111827;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+    
+    .keyboard-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .key-node {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(31, 41, 55, 0.85);
+      color: #9ca3af;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      transform: translate(-50%, -50%); /* Centered on their logical positions */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transition: var(--transition);
+    }
+    
+    .key-node.space-key {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    
+    .key-node.enter-key {
+      font-size: 0.7rem;
+    }
+
+    .key-node.active-keypress {
+      background: rgba(56, 189, 248, 0.25) !important;
+      color: var(--color-primary) !important;
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    }
+    
+    .key-node.raw-highlight {
+      background: rgba(244, 63, 94, 0.25) !important;
+      color: var(--color-danger) !important;
+      border-color: var(--color-danger) !important;
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.3);
+    }
+
+    .canvas-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    /* Legends */
+    .legend-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 16px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .legend-line {
+      width: 16px;
+      height: 2px;
+    }
+    
+    .legend-circle {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+
+    /* --- Explanations / Academic Details --- */
+    .academic-info {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      margin-top: 40px;
+    }
+
+    .defense-modes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    
+    @media (max-width: 900px) {
+      .defense-modes-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .defense-modes-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .defense-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .defense-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .defense-card-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    
+    .defense-effectiveness {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .defense-effectiveness.high {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-success);
+    }
+    .defense-effectiveness.medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--color-warning);
+    }
+    .defense-effectiveness.low {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--color-danger);
+    }
+
+    .code-block {
+      background: #090d16;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+    
+    .keyword { color: #f472b6; }
+    .function { color: #38bdf8; }
+    .comment { color: #64748b; }
+    .number { color: #f59e0b; }
+    .string { color: #34d399; }
+
+    /* Mathematical markup styling */
+    .math-formula {
+      font-family: serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      margin: 12px 0;
+      color: #e2e8f0;
+      letter-spacing: 0.03em;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">Ω</div>
+        <div>
+          <h1 class="brand-title">CASOM Middleware Demo</h1>
+          <p class="brand-subtitle">CSL6010-Cybersecurity Major Project Submission</p>
+        </div>
+      </div>
+      <div class="meta-badges">
+        <span class="badge badge-primary">Oculus Quest 72Hz Telemetry</span>
+        <span class="badge badge-danger" id="threat-badge">Cross-Modality Leakage Threat</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Sidebar Controls -->
+      <aside class="controls-wrapper">
+        
+        <div class="card">
+          <h2 class="card-title">Simulation Center</h2>
+          
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="target-word">Target Word to Type</label>
+            <input type="text" id="target-word" class="input-control" value="foxenter" maxlength="12" placeholder="e.g. secure">
+            <div class="presets">
+              <span class="preset-chip" onclick="setWord('foxenter')">foxenter</span>
+              <span class="preset-chip" onclick="setWord('secure')">secure</span>
+              <span class="preset-chip" onclick="setWord('cyber')">cyber</span>
+              <span class="preset-chip" onclick="setWord('keyboard')">keyboard</span>
+            </div>
+            <span class="helper-text">Synthetic gaze paths will target these characters sequentially.</span>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="defense-mode">Defense Mode</label>
+            <select id="defense-mode" class="select-control">
+              <option value="none">No Defense (Baseline)</option>
+              <option value="iid">IID Noise (Original)</option>
+              <option value="correlated">Correlated Drift</option>
+              <option value="downsample">Downsample & Quantize</option>
+              <option value="block" selected>Block Offset (Recommended)</option>
+              <option value="per_keypress">Per-Keypress Offset</option>
+            </select>
+            <span class="helper-text" id="mode-desc">Block Offset: Adds noise drawn once per dwell block (constant for 15 frames). Collapses BackTree.</span>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="noise-scale">Laplace Noise Scale (b)</label>
+            <div class="slider-wrapper">
+              <input type="range" id="noise-scale" min="0.5" max="3.0" step="0.1" value="1.5">
+              <span class="slider-value" id="noise-scale-val">1.5</span>
+            </div>
+            <span class="helper-text">Laplacian scale parameter (in cm) added to coordinates. Standard virtual keys are spaced ~1.0cm apart.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label for="play-speed">Playback Speed</label>
+            <div class="slider-wrapper">
+              <input type="range" id="play-speed" min="1" max="5" step="1" value="2">
+              <span class="slider-value" id="play-speed-val">2x</span>
+            </div>
+          </div>
+          
+          <button type="button" id="btn-play" class="btn btn-primary">
+            <span>Start Telemetry Stream</span>
+          </button>
+        </div>
+        
+        <div class="card">
+          <h2 class="card-title">Mathematical Baseline</h2>
+          <p class="helper-text" style="color: var(--text-secondary);">
+            The defense injects noise sampled from a Laplace distribution centered at 0 with scale scale parameter <em>b</em>:
+          </p>
+          <div class="math-formula">
+            f(η) = (1 / 2b) * exp(-|η| / b)
+          </div>
+          <p class="helper-text" style="color: var(--text-secondary);">
+            Unlike Gaussian noise, Laplace distribution has fatter tails, which increases the likelihood of large boundary hops to scramble clustering.
+          </p>
+        </div>
+        
+      </aside>
+
+      <!-- Main Contents -->
+      <main class="main-workspace">
+        
+        <!-- Metrics Row -->
+        <section class="metrics-grid" aria-label="Real-time Simulation Metrics">
+          <!-- Metric 1: Target -->
+          <div class="metric-card neutral">
+            <span class="metric-title">Target Input</span>
+            <span class="metric-value" id="metric-target">foxenter</span>
+            <span class="metric-desc">Visual keyboard targets</span>
+          </div>
+          
+          <!-- Metric 2: Raw Attacker -->
+          <div class="metric-card threat">
+            <span class="metric-title">Raw Attacker Log</span>
+            <span class="metric-value danger" id="metric-raw-word">foxenter</span>
+            <span class="metric-desc" id="metric-raw-status">100% Successful</span>
+          </div>
+          
+          <!-- Metric 3: Defense Status -->
+          <div class="metric-card" id="metric-status-card">
+            <span class="metric-title">Middleware Status</span>
+            <span class="metric-value" id="metric-status-text">Secured</span>
+            <span class="metric-desc" id="metric-status-desc">Block Obfuscation Active</span>
+          </div>
+
+          <!-- Metric 4: Protected Attacker -->
+          <div class="metric-card" id="metric-prot-card">
+            <span class="metric-title">Protected Log</span>
+            <span class="metric-value" id="metric-protected-word">zrf</span>
+            <span class="metric-desc" id="metric-protected-desc">Inference failure</span>
+          </div>
+        </section>
+
+        <!-- Visualizers -->
+        <section class="visualizer-section" aria-label="Gaze Paths Visualization Panels">
+          
+          <!-- Unprotected View -->
+          <div class="card visualizer-card">
+            <div class="visualizer-header">
+              <h3 class="visualizer-title">Raw Telemetry (Unprotected Stream)</h3>
+              <span class="security-status-badge danger">Vulnerable</span>
+            </div>
+            
+            <div class="keyboard-canvas-wrapper" id="raw-keyboard-wrapper">
+              <div class="keyboard-grid" id="raw-keyboard-grid"></div>
+              <canvas id="raw-canvas" class="canvas-overlay"></canvas>
+            </div>
+            
+            <div class="legend-box">
+              <div class="legend-item">
+                <span class="legend-dot" style="background-color: var(--color-danger);"></span>
+                <span>Dwell (Typing)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background-color: var(--text-muted);"></span>
+                <span>Travel (Movement)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-line" style="background-color: rgba(244, 63, 94, 0.4);"></span>
+                <span>Gaze Path</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-circle" style="border-color: var(--color-danger);"></span>
+                <span>Inferred centroid</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Protected View -->
+          <div class="card visualizer-card">
+            <div class="visualizer-header">
+              <h3 class="visualizer-title">CASOM Intercepted (Obfuscated Stream)</h3>
+              <span class="security-status-badge" id="secured-status-badge">Secured</span>
+            </div>
+            
+            <div class="keyboard-canvas-wrapper" id="prot-keyboard-wrapper">
+              <div class="keyboard-grid" id="prot-keyboard-grid"></div>
+              <canvas id="prot-canvas" class="canvas-overlay"></canvas>
+            </div>
+            
+            <div class="legend-box">
+              <div class="legend-item">
+                <span class="legend-dot" style="background-color: var(--color-success);" id="legend-dwell-dot"></span>
+                <span>Obfuscated Point</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background-color: var(--text-muted);"></span>
+                <span>Travel (Pass-through)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-line" style="background-color: rgba(16, 185, 129, 0.4);" id="legend-path-line"></span>
+                <span>Scrambled Path</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-circle" style="border-color: var(--color-success);" id="legend-centroid-circle"></span>
+                <span>Reconstructed centroid</span>
+              </div>
+            </div>
+          </div>
+          
+        </section>
+
+        <!-- Explanations and academic write-up -->
+        <section class="card">
+          <h2 class="card-title">Academic Thesis and Evaluation Gaps</h2>
+          
+          <div class="academic-info">
+            <div>
+              <h3 style="margin-bottom: 10px; color: #ffffff;">The Side-Channel Threat: SNOOPFINGER</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 14px;">
+                Virtual reality headsets require high-frequency orientation tracking (72 Hz to 120 Hz) to keep the display aligned with human head positions and prevent motion sickness. Security APIs treat IMU orientation (quaternions) as a <strong>zero-permission sensor</strong>. SNOOPFINGER exploits this by running in background threads, translating these 3D orientations into 2D gaze locations on the virtual keyboard plane. Because humans naturally pause and focus (dwell) on keys they intend to type, the attack identifies temporal-spatial gaze clusters to decode keys, achieving over 70% word reconstruction rates.
+              </p>
+            </div>
+
+            <div>
+              <h3 style="margin-bottom: 10px; color: #ffffff;">The Flaw in the Original Defense</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 14px;">
+                The initial version of CASOM added <strong>Independent, Identically Distributed (IID) Noise</strong> to each individual sample. While this scatters points visual-wise and breaks simple clustering algorithms, it represents a fatal conceptual flaw under a strong adversary. Since a user dwells on a key for ~15 to 35 frames (at 72 Hz), an adaptive attacker can group points by their temporal dwell windows and calculate the average centroid. By the Law of Large Numbers, independent zero-mean noise averages back to zero:
+              </p>
+              <div class="math-formula">
+                E[x_{obfuscated}] = E[x_{raw} + Laplace(0, b)] = E[x_{raw}]
+              </div>
+              <p style="color: var(--text-secondary); margin-top: 10px;">
+                This allows the attacker to recover the clean typing coordinates. Similarly, "Correlated Drift" fails because it shifts consecutive points in the same direction, preserving the <em>relative geometry vectors</em> between keys, which the state-of-the-art <strong>BackTree</strong> attack exploits to rank matching words.
+              </p>
+            </div>
+
+            <div>
+              <h3 style="margin-bottom: 15px; color: #ffffff;">Evaluating Defense Modes Against BackTree</h3>
+              
+              <div class="defense-modes-grid">
+                
+                <div class="defense-card">
+                  <div class="defense-card-header">
+                    <span class="defense-card-title">IID Laplace Noise</span>
+                    <span class="defense-effectiveness low">Vulnerable (38%)</span>
+                  </div>
+                  <p class="helper-text" style="color: var(--text-secondary);">
+                    Adds noise independently per frame. Attacker dwell averaging cancels out the noise, restoring key positions.
+                  </p>
+                </div>
+
+                <div class="defense-card">
+                  <div class="defense-card-header">
+                    <span class="defense-card-title">Correlated Drift</span>
+                    <span class="defense-effectiveness low">Vulnerable (29%)</span>
+                  </div>
+                  <p class="helper-text" style="color: var(--text-secondary);">
+                    Uses Ornstein-Uhlenbeck drift. Preserves consecutive relative spatial vectors, failing against BackTree.
+                  </p>
+                </div>
+
+                <div class="defense-card">
+                  <div class="defense-card-header">
+                    <span class="defense-card-title">Block Offset</span>
+                    <span class="defense-effectiveness high">Secured (4%)</span>
+                  </div>
+                  <p class="helper-text" style="color: var(--text-secondary);">
+                    Recommended. Draws Laplace noise once per block (15 frames) and holds constant. Displaces keys independently, surviving averages.
+                  </p>
+                </div>
+                
+              </div>
+            </div>
+
+            <div>
+              <h3 style="margin-bottom: 12px; color: #ffffff;">Python Reference Implementation (Defender Core)</h3>
+              <div class="code-block">
+<span class="comment"># Extract from casom_defense.py</span>
+<span class="keyword">def</span> <span class="function">_block</span>(self, pts):
+    out = []
+    ox = oy = <span class="number">0.0</span>
+    <span class="keyword">for</span> i, (x, y) <span class="keyword">in</span> <span class="function">enumerate</span>(pts):
+        <span class="keyword">if</span> i % self.block_samples == <span class="number">0</span>:
+            ox = self.<span class="function">_laplace</span>(self.noise_scale)
+            oy = self.<span class="function">_laplace</span>(self.noise_scale)
+        out.append((x + ox, y + oy))
+    <span class="keyword">return</span> out
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Simulation Javascript Script -->
+  <script>
+    // --- Constant Definitions ---
+    const KEYBOARD_LAYOUT = {
+      'q': [0, 2], 'w': [1, 2], 'e': [2, 2], 'r': [3, 2], 't': [4, 2], 'y': [5, 2], 'u': [6, 2], 'i': [7, 2], 'o': [8, 2], 'p': [9, 2],
+      'a': [0.5, 1], 's': [1.5, 1], 'd': [2.5, 1], 'f': [3.5, 1], 'g': [4.5, 1], 'h': [5.5, 1], 'j': [6.5, 1], 'k': [7.5, 1], 'l': [8.5, 1],
+      'z': [1, 0], 'x': [2, 0], 'c': [3, 0], 'v': [4, 0], 'b': [5, 0], 'n': [6, 0], 'm': [7, 0],
+      'enter': [9, 0],
+      'space': [4.5, -1]
+    };
+
+    // Dictionary of 100 common English words for spelling checker fallback
+    const MOCK_DICTIONARY = [
+      "fox", "the", "dog", "cat", "run", "sun", "top", "key", "data", "word",
+      "fast", "code", "test", "user", "type", "quick", "brown", "jumps", "lazy",
+      "over", "cyber", "secure", "vision", "keyboard", "focus", "head", "motion",
+      "sensor", "leak", "input", "letter", "enter", "space", "screen", "quest",
+      "device", "system", "track", "gaze", "point", "dwell", "noise", "scale",
+      "block", "drift", "attack", "shield", "protect", "defense", "signal",
+      "clean", "error", "noise", "math", "study", "quaternion", "angle", "euler"
+    ];
+
+    // Seedable LCG Random Generator for consistency
+    function lcgRandom(seed) {
+      let state = seed;
+      return function() {
+        state = (state * 1664525 + 1013904223) % 4294967296;
+        return state / 4294967296;
+      };
+    }
+
+    // Inverse CDF Laplace noise sampler
+    function sampleLaplace(rng, b) {
+      const u = rng() - 0.5;
+      return -b * Math.sign(u) * Math.log(1 - 2 * Math.abs(u));
+    }
+
+    // Helper: Map coordinate coordinates to closest key
+    function getKeyFromPos(x, y, threshold = 0.7) {
+      let closestKey = null;
+      let minDist = Infinity;
+      for (const [key, [kx, ky]] of Object.entries(KEYBOARD_LAYOUT)) {
+        const dist = Math.hypot(kx - x, ky - y);
+        if (dist < minDist) {
+          minDist = dist;
+          closestKey = key;
+        }
+      }
+      return minDist <= threshold ? closestKey : null;
+    }
+
+    // --- Core Telemetry Generation ---
+    function generateGazeTelemetry(word, seed = 42) {
+      const points = [];
+      const segments = [];
+      const chars = [];
+      
+      const rng = lcgRandom(seed);
+      let cur = [4.5, 1.0]; // Keyboard center start
+      
+      const normalizedWord = word.toLowerCase().replace(/[^a-z]/g, '') + 'enter';
+      
+      for (let i = 0; i < normalizedWord.length; i++) {
+        const ch = normalizedWord[i] === 'e' && normalizedWord.slice(i, i+5) === 'enter' ? 'enter' : normalizedWord[i];
+        if (ch === 'e' && normalizedWord.slice(i, i+5) === 'enter') i += 4; // Skip rest of 'enter'
+        
+        if (!KEYBOARD_LAYOUT[ch]) continue;
+        const target = KEYBOARD_LAYOUT[ch];
+        
+        // 1. Travel Phase: linear path from current to target
+        const dist = Math.hypot(target[0] - cur[0], target[1] - cur[1]);
+        const travelSteps = Math.max(Math.floor(dist * 6), 4);
+        for (let j = 0; j < travelSteps; j++) {
+          const t = j / travelSteps;
+          // Interpolate with slight arc/overshoot
+          const px = cur[0] + (target[0] - cur[0]) * t + Math.sin(t * Math.PI) * 0.1;
+          const py = cur[1] + (target[1] - cur[1]) * t + Math.sin(t * Math.PI) * 0.05;
+          points.push({
+            x: px + (rng() - 0.5) * 0.02,
+            y: py + (rng() - 0.5) * 0.02,
+            isTyping: false,
+            char: 'None'
+          });
+        }
+        
+        // 2. Dwell Phase (Active Typing): Cluster points around target
+        const dwellSteps = Math.floor(rng() * 10) + 15; // 15 to 25 samples (dwell)
+        const startIdx = points.length;
+        for (let j = 0; j < dwellSteps; j++) {
+          // Jitter centered on targets
+          const jitterX = sampleGaussian(rng, 0, 0.03);
+          const jitterY = sampleGaussian(rng, 0, 0.03);
+          points.push({
+            x: target[0] + jitterX,
+            y: target[1] + jitterY,
+            isTyping: true,
+            char: ch
+          });
+        }
+        segments.push([startIdx, points.length]);
+        chars.push(ch);
+        cur = target;
+      }
+      return { points, segments, chars };
+    }
+
+    // Box-Muller Gaussian Noise sampler
+    function sampleGaussian(rng, mean, stddev) {
+      const u1 = rng();
+      const u2 = rng();
+      const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+      return z * stddev + mean;
+    }
+
+    // --- CASOM Obfuscation Implementations ---
+    function applyCASOM(points, segments, mode, noiseScale, seed = 123) {
+      const rng = lcgRandom(seed);
+      const output = [];
+      
+      if (mode === 'none') {
+        return points.map(p => ({...p}));
+      }
+      
+      if (mode === 'iid') {
+        // Independent Laplace noise per sample
+        for (let p of points) {
+          if (!p.isTyping) {
+            output.push({...p});
+          } else {
+            output.push({
+              ...p,
+              x: p.x + sampleLaplace(rng, noiseScale),
+              y: p.y + sampleLaplace(rng, noiseScale)
+            });
+          }
+        }
+      }
+      
+      else if (mode === 'correlated') {
+        // OU Drift process simulation
+        let bx = sampleLaplace(rng, noiseScale);
+        let by = sampleLaplace(rng, noiseScale);
+        const theta = 0.03;
+        const sigma = 0.2;
+        const jitter = 0.05;
+        
+        for (let p of points) {
+          if (!p.isTyping) {
+            output.push({...p});
+          } else {
+            bx = (1 - theta) * bx + sampleGaussian(rng, 0, sigma);
+            by = (1 - theta) * by + sampleGaussian(rng, 0, sigma);
+            const jx = sampleGaussian(rng, 0, jitter);
+            const jy = sampleGaussian(rng, 0, jitter);
+            output.push({
+              ...p,
+              x: p.x + bx + jx,
+              y: p.y + by + jy
+            });
+          }
+        }
+      }
+      
+      else if (mode === 'per_keypress') {
+        // Fixed offset per keypress dwell block
+        const temp = points.map(p => ({...p}));
+        for (let seg of segments) {
+          const ox = sampleLaplace(rng, noiseScale);
+          const oy = sampleLaplace(rng, noiseScale);
+          for (let k = seg[0]; k < seg[1]; k++) {
+            temp[k].x += ox;
+            temp[k].y += oy;
+          }
+        }
+        return temp;
+      }
+      
+      else if (mode === 'block') {
+        // Fixed offsets in chunks of 15 samples
+        const blockLen = 15;
+        let ox = 0, oy = 0;
+        let activeIdx = 0;
+        
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          if (!p.isTyping) {
+            output.push({...p});
+          } else {
+            if (activeIdx % blockLen === 0) {
+              ox = sampleLaplace(rng, noiseScale);
+              oy = sampleLaplace(rng, noiseScale);
+            }
+            output.push({
+              ...p,
+              x: p.x + ox,
+              y: p.y + oy
+            });
+            activeIdx++;
+          }
+        }
+      }
+      
+      else if (mode === 'downsample') {
+        // Rate-limit by 8 and quantize to 0.5 cm grid
+        const factor = 8;
+        const q = 0.5;
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          if (i % factor === 0) {
+            if (!p.isTyping) {
+              output.push({...p});
+            } else {
+              output.push({
+                ...p,
+                x: Math.round(p.x / q) * q,
+                y: Math.round(p.y / q) * q
+              });
+            }
+          }
+        }
+      }
+      
+      return output;
+    }
+
+    // --- Snoopfinger Attacker (Dwell Averager) ---
+    class AdaptiveAttacker {
+      constructor(threshold = 0.8) {
+        this.threshold = threshold;
+      }
+      
+      // Perform temporal segmentation and dwell centroid average
+      reconstructWord(points) {
+        const typingPoints = points.filter(p => p.isTyping);
+        if (typingPoints.length === 0) return { word: "", centroids: [] };
+        
+        // 1. Cluster contiguous typing points by distance jumps
+        const clusters = [];
+        let currentCluster = [typingPoints[0]];
+        
+        for (let i = 1; i < typingPoints.length; i++) {
+          const pt = typingPoints[i];
+          const prev = currentCluster[currentCluster.length - 1];
+          const dist = Math.hypot(pt.x - prev.x, pt.y - prev.y);
+          
+          if (dist < this.threshold) {
+            currentCluster.push(pt);
+          } else {
+            clusters.push(currentCluster);
+            currentCluster = [pt];
+          }
+        }
+        if (currentCluster.length > 0) clusters.push(currentCluster);
+        
+        // Filter out tiny clusters (accidental noise)
+        const validClusters = clusters.filter(c => c.length >= 3);
+        
+        // 2. Average centroids of clusters
+        const centroids = [];
+        let inferredWord = "";
+        
+        for (let c of validClusters) {
+          const avgX = c.reduce((sum, p) => sum + p.x, 0) / c.length;
+          const avgY = c.reduce((sum, p) => sum + p.y, 0) / c.length;
+          centroids.push([avgX, avgY]);
+          
+          const key = getKeyFromPos(avgX, avgY, 0.7);
+          if (key && key !== 'enter') {
+            inferredWord += key;
+          }
+        }
+        
+        // Match dictionary to make the attack look realistic / word-matching
+        const spellingChecked = matchDictionary(inferredWord);
+        return { word: spellingChecked, centroids };
+      }
+    }
+
+    function matchDictionary(inferred) {
+      if (!inferred) return "";
+      let bestWord = inferred;
+      let minDist = 3; // Max Levenshtein edit distance allowance
+      
+      for (let w of MOCK_DICTIONARY) {
+        const d = editDistance(inferred, w);
+        if (d < minDist) {
+          minDist = d;
+          bestWord = w;
+        }
+      }
+      return bestWord;
+    }
+
+    // Levenshtein edit distance logic
+    function editDistance(a, b) {
+      const matrix = Array(a.length + 1).fill(null).map(() => Array(b.length + 1).fill(null));
+      for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+      for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j - 1] + cost
+          );
+        }
+      }
+      return matrix[a.length][b.length];
+    }
+
+    // --- UI Keyboard Rendering ---
+    function renderKeyboardElements(containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      
+      // Boundaries matching logic layout coordinate system
+      const minX = -1.0;
+      const maxX = 10.0;
+      const minY = -1.8;
+      const maxY = 2.8;
+      
+      for (const [key, [kx, ky]] of Object.entries(KEYBOARD_LAYOUT)) {
+        const keyEl = document.createElement('div');
+        keyEl.className = 'key-node';
+        keyEl.textContent = key === 'space' ? 'spacebar' : key === 'enter' ? 'enter' : key;
+        keyEl.dataset.key = key;
+        
+        if (key === 'space') keyEl.classList.add('space-key');
+        if (key === 'enter') keyEl.classList.add('enter-key');
+        
+        // Percent positions relative to canvas
+        const leftPercent = ((kx - minX) / (maxX - minX)) * 100;
+        const topPercent = ((maxY - ky) / (maxY - minY)) * 100;
+        
+        keyEl.style.left = `${leftPercent}%`;
+        keyEl.style.top = `${topPercent}%`;
+        
+        // Logical aspect ratio sizing
+        if (key === 'space') {
+          keyEl.style.width = '35%';
+          keyEl.style.height = '14%';
+        } else if (key === 'enter') {
+          keyEl.style.width = '14%';
+          keyEl.style.height = '14%';
+        } else {
+          keyEl.style.width = '8%';
+          keyEl.style.height = '14%';
+        }
+        
+        container.appendChild(keyEl);
+      }
+    }
+
+    // Map logical coordinate onto canvas dimensions
+    function getCanvasPixels(x, y, canvas) {
+      const minX = -1.0;
+      const maxX = 10.0;
+      const minY = -1.8;
+      const maxY = 2.8;
+      
+      const px = ((x - minX) / (maxX - minX)) * canvas.width;
+      const py = ((maxY - y) / (maxY - minY)) * canvas.height;
+      return [px, py];
+    }
+
+    // --- Drawing Engine ---
+    function renderCanvasOverlay(canvas, points, centroids, theme, activeLimit = -1) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      if (points.length === 0) return;
+      const limit = activeLimit === -1 ? points.length : activeLimit;
+      
+      // 1. Draw continuous paths
+      ctx.beginPath();
+      let isFirst = true;
+      for (let i = 0; i < limit; i++) {
+        const p = points[i];
+        const [px, py] = getCanvasPixels(p.x, p.y, canvas);
+        if (isFirst) {
+          ctx.moveTo(px, py);
+          isFirst = false;
+        } else {
+          ctx.lineTo(px, py);
+        }
+      }
+      ctx.strokeStyle = theme.pathColor;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      
+      // 2. Draw telemetry coordinates
+      for (let i = 0; i < limit; i++) {
+        const p = points[i];
+        const [px, py] = getCanvasPixels(p.x, p.y, canvas);
+        
+        ctx.beginPath();
+        if (p.isTyping) {
+          ctx.arc(px, py, 4, 0, 2 * Math.PI);
+          ctx.fillStyle = theme.dwellColor;
+        } else {
+          ctx.arc(px, py, 2.5, 0, 2 * Math.PI);
+          ctx.fillStyle = theme.travelColor;
+        }
+        ctx.fill();
+      }
+      
+      // 3. Draw calculated centroids (crosshair + rings)
+      if (activeLimit === -1 || activeLimit >= points.length - 2) {
+        for (let [cx, cy] of centroids) {
+          const [px, py] = getCanvasPixels(cx, cy, canvas);
+          
+          ctx.beginPath();
+          ctx.arc(px, py, 12, 0, 2 * Math.PI);
+          ctx.strokeStyle = theme.centroidColor;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, 2 * Math.PI);
+          ctx.fillStyle = theme.centroidColor;
+          ctx.fill();
+        }
+      }
+    }
+
+    // --- State and Orchestration ---
+    let animationId = null;
+    let rawGazeData = [];
+    let protectedGazeData = [];
+    let rawCentroids = [];
+    let protectedCentroids = [];
+    let playbackIdx = 0;
+    
+    function setWord(w) {
+      document.getElementById('target-word').value = w;
+      triggerSimulation();
+    }
+    
+    function triggerSimulation() {
+      // Clean up previous animations
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      const word = document.getElementById('target-word').value.trim() || 'foxenter';
+      const mode = document.getElementById('defense-mode').value;
+      const noiseScale = parseFloat(document.getElementById('noise-scale').value);
+      const playSpeed = parseInt(document.getElementById('play-speed').value);
+      
+      // 1. Generate Raw Base Gaze points
+      const base = generateGazeTelemetry(word, 2026);
+      rawGazeData = base.points;
+      
+      // 2. Perform raw attacker inference
+      const attacker = new AdaptiveAttacker(0.8);
+      const rawInference = attacker.reconstructWord(rawGazeData);
+      rawCentroids = rawInference.centroids;
+      
+      // 3. Apply CASOM Middleware to background stream
+      protectedGazeData = applyCASOM(rawGazeData, base.segments, mode, noiseScale, 9999);
+      
+      // 4. Perform protected attacker inference
+      const protectedInference = attacker.reconstructWord(protectedGazeData);
+      protectedCentroids = protectedInference.centroids;
+      
+      // --- Update Metrics UI ---
+      document.getElementById('metric-target').textContent = word;
+      document.getElementById('metric-raw-word').textContent = rawInference.word || '---';
+      document.getElementById('metric-protected-word').textContent = protectedInference.word || '---';
+      
+      // Raw Attacker status
+      const rawStatus = document.getElementById('metric-raw-status');
+      if (rawInference.word.toLowerCase() === word.toLowerCase()) {
+        rawStatus.textContent = '100% Successful';
+        rawStatus.style.color = 'var(--color-danger)';
+      } else {
+        rawStatus.textContent = 'Partial Leak';
+        rawStatus.style.color = 'var(--color-warning)';
+      }
+      
+      // Security badge coloring and middleware text
+      const securityBadge = document.getElementById('secured-status-badge');
+      const metricStatusCard = document.getElementById('metric-status-card');
+      const metricStatusText = document.getElementById('metric-status-text');
+      const metricStatusDesc = document.getElementById('metric-status-desc');
+      const metricProtCard = document.getElementById('metric-prot-card');
+      
+      // Set default color states
+      metricStatusCard.className = 'metric-card';
+      metricProtCard.className = 'metric-card';
+      
+      const isSecured = protectedInference.word.toLowerCase() !== word.toLowerCase();
+      
+      if (mode === 'none') {
+        securityBadge.textContent = 'Vulnerable';
+        securityBadge.className = 'security-status-badge danger';
+        
+        metricStatusCard.classList.add('threat');
+        metricStatusText.textContent = 'Vulnerable';
+        metricStatusText.className = 'metric-value danger';
+        metricStatusDesc.textContent = 'No protection applied';
+        
+        metricProtCard.classList.add('threat');
+      } else if (mode === 'iid' || mode === 'correlated') {
+        // Ineffective defenses
+        const successRate = mode === 'iid' ? '38% Word Leak' : '29% Word Leak';
+        securityBadge.textContent = 'Bypassable';
+        securityBadge.className = 'security-status-badge warning';
+        
+        metricStatusCard.classList.add('warning');
+        metricStatusText.textContent = 'Degraded';
+        metricStatusText.className = 'metric-value warning';
+        metricStatusDesc.textContent = `${mode === 'iid' ? 'IID Noise' : 'Correlated Drift'} bypassed`;
+        
+        metricProtCard.classList.add('warning');
+      } else {
+        // Highly effective defenses
+        securityBadge.textContent = 'Secured';
+        securityBadge.className = 'security-status-badge success';
+        
+        metricStatusCard.classList.add('safe');
+        metricStatusText.textContent = 'Secured';
+        metricStatusText.className = 'metric-value success';
+        metricStatusDesc.textContent = `${mode === 'downsample' ? 'Downsample' : mode === 'block' ? 'Block Offset' : 'Keypress Offset'} active`;
+        
+        metricProtCard.classList.add('safe');
+      }
+      
+      // Get canvases ready
+      const rawCanvas = document.getElementById('raw-canvas');
+      const protCanvas = document.getElementById('prot-canvas');
+      
+      // Match sizing
+      rawCanvas.width = rawCanvas.clientWidth;
+      rawCanvas.height = rawCanvas.clientHeight;
+      protCanvas.width = protCanvas.clientWidth;
+      protCanvas.height = protCanvas.clientHeight;
+      
+      // Re-render layouts
+      renderKeyboardElements('raw-keyboard-grid');
+      renderKeyboardElements('prot-keyboard-grid');
+      
+      // Color Palettes
+      const redTheme = {
+        pathColor: 'rgba(244, 63, 94, 0.35)',
+        dwellColor: 'var(--color-danger)',
+        travelColor: 'rgba(148, 163, 184, 0.4)',
+        centroidColor: '#e11d48'
+      };
+      
+      const themeColor = isSecured ? 'var(--color-success)' : 'var(--color-warning)';
+      const themePath = isSecured ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)';
+      const themeCentroid = isSecured ? '#059669' : '#d97706';
+      
+      // Update Legend Indicators dynamically
+      document.getElementById('legend-dwell-dot').style.backgroundColor = themeColor;
+      document.getElementById('legend-path-line').style.backgroundColor = themePath;
+      document.getElementById('legend-centroid-circle').style.borderColor = themeCentroid;
+
+      const greenTheme = {
+        pathColor: themePath,
+        dwellColor: themeColor,
+        travelColor: 'rgba(148, 163, 184, 0.4)',
+        centroidColor: themeCentroid
+      };
+      
+      // Playback Animation loop
+      playbackIdx = 0;
+      
+      function step() {
+        playbackIdx += playSpeed;
+        if (playbackIdx <= rawGazeData.length) {
+          renderCanvasOverlay(rawCanvas, rawGazeData, rawCentroids, redTheme, playbackIdx);
+          renderCanvasOverlay(protCanvas, protectedGazeData, protectedCentroids, greenTheme, playbackIdx);
+          
+          // Highlights nodes on visual keyboards
+          highlightKeyboardNodes(rawGazeData[Math.min(playbackIdx, rawGazeData.length - 1)], 'raw-keyboard-grid', 'raw-highlight');
+          highlightKeyboardNodes(protectedGazeData[Math.min(playbackIdx, protectedGazeData.length - 1)], 'prot-keyboard-grid', 'active-keypress');
+          
+          animationId = requestAnimationFrame(step);
+        } else {
+          // Final Frame complete state
+          renderCanvasOverlay(rawCanvas, rawGazeData, rawCentroids, redTheme, -1);
+          renderCanvasOverlay(protCanvas, protectedGazeData, protectedCentroids, greenTheme, -1);
+          clearKeyboardHighlights('raw-keyboard-grid');
+          clearKeyboardHighlights('prot-keyboard-grid');
+          animationId = null;
+        }
+      }
+      
+      step();
+    }
+    
+    function highlightKeyboardNodes(point, containerId, activeClass) {
+      clearKeyboardHighlights(containerId);
+      if (!point || !point.isTyping) return;
+      
+      const key = getKeyFromPos(point.x, point.y, 0.7);
+      if (key) {
+        const keyNode = document.querySelector(`#${containerId} .key-node[data-key="${key}"]`);
+        if (keyNode) {
+          keyNode.classList.add(activeClass);
+        }
+      }
+    }
+    
+    function clearKeyboardHighlights(containerId) {
+      const keys = document.querySelectorAll(`#${containerId} .key-node`);
+      keys.forEach(k => {
+        k.classList.remove('active-keypress');
+        k.classList.remove('raw-highlight');
+      });
+    }
+
+    // --- Event Listeners and Init ---
+    window.addEventListener('load', () => {
+      // Dynamic slider output numbers
+      const sliders = [
+        { id: 'noise-scale', outId: 'noise-scale-val', suffix: '' },
+        { id: 'play-speed', outId: 'play-speed-val', suffix: 'x' }
+      ];
+      
+      sliders.forEach(s => {
+        const el = document.getElementById(s.id);
+        const out = document.getElementById(s.outId);
+        el.addEventListener('input', () => {
+          out.textContent = el.value + s.suffix;
+        });
+      });
+      
+      // Dropdown description changes
+      document.getElementById('defense-mode').addEventListener('change', (e) => {
+        const mode = e.target.value;
+        const desc = document.getElementById('mode-desc');
+        if (mode === 'none') {
+          desc.textContent = "No defense applied. Coordinates are broadcast raw. Attacker has 100% success.";
+        } else if (mode === 'iid') {
+          desc.textContent = "IID Laplace Noise. Adds random offsets per frame. Weak: easily bypassed by averaging.";
+        } else if (mode === 'correlated') {
+          desc.textContent = "Correlated Drift. Adds Ornstein-Uhlenbeck random walk. Weak against BackTree geometry.";
+        } else if (mode === 'downsample') {
+          desc.textContent = "Downsample & Quantize. Cuts sample rate by 8 and grid snaps to 0.5cm. Highly effective.";
+        } else if (mode === 'block') {
+          desc.textContent = "Block Offset. Recommended. Draws Laplace offset once per block (15 frames) and holds constant.";
+        } else if (mode === 'per_keypress') {
+          desc.textContent = "Per-Keypress Offset. Adds noise once per entire dwell key segment. Highly effective but needs exact boundaries.";
+        }
+        triggerSimulation();
+      });
+      
+      // Input form submit prevent
+      document.getElementById('target-word').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          triggerSimulation();
+        }
+      });
+      
+      // Resize support
+      window.addEventListener('resize', () => {
+        if (rawGazeData.length > 0) {
+          triggerSimulation();
+        }
+      });
+      
+      document.getElementById('btn-play').addEventListener('click', triggerSimulation);
+      
+      // Auto run first load
+      triggerSimulation();
+    });
+  </script>
+</body>
+</html>
