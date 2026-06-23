@@ -152,14 +152,27 @@ def main():
     slide.shapes.add_picture("math_yaw.png", Inches(5.3), Inches(3.2), width=Inches(4.1))
 
     # -------------------------------------------------------------------------
-    # Slide 4: Identified Gaps & Limitations
+    # Slide 4: Identified Gaps in SNOOPFINGER's Attack Model
     # -------------------------------------------------------------------------
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_slide_background(slide, COLOR_BG)
-    add_header(slide, "Identified Gaps & Defense Limitations")
+    add_header(slide, "Gaps in SNOOPFINGER's Attack Model")
     
     tf = create_textbox(slide, Inches(0.6), Inches(1.4), Inches(8.8), Inches(3.8))
-    add_bullet(tf, "The SNOOPFINGER IEEE paper discusses countermeasures (e.g. Obfuscation) but provides no implementation code or API design.", bold_prefix="Abstract Proposal Gap: ")
+    add_bullet(tf, "The attack relies on passive, direct head trajectories matching key coordinates.", bold_prefix="Trajectory Assumption: ")
+    add_bullet(tf, "If a user intentionally performs extraneous head gestures (nods, shakes, circles) while typing, the background attacker cannot differentiate typing dwells from intentional deviations. This serves as a direct manual bypass.", bold_prefix="User Deviation Bypass (Gap 1): ", color=COLOR_ACCENT_GREEN)
+    add_bullet(tf, "The attack assumes telemetry represents only keyboard interaction gestures.", bold_prefix="Telemetry Assumption: ")
+    add_bullet(tf, "External physical vibrations (e.g., traveling in a moving vehicle, walking) or hardware-level sensor tampering alter the raw telemetry. The attack algorithm has no sensor-origin authentication and cannot separate target dwells from vibrations.", bold_prefix="External Tampering & Noise (Gap 2): ", color=COLOR_ACCENT_RED)
+
+    # -------------------------------------------------------------------------
+    # Slide 5: Identified Gaps in Proposed Countermeasures
+    # -------------------------------------------------------------------------
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    set_slide_background(slide, COLOR_BG)
+    add_header(slide, "Identified Gaps in Proposed Countermeasures")
+    
+    tf = create_textbox(slide, Inches(0.6), Inches(1.4), Inches(8.8), Inches(3.8))
+    add_bullet(tf, "The SNOOPFINGER IEEE paper discusses countermeasures (e.g., Obfuscation) but provides no implementation code or API design.", bold_prefix="Abstract Proposal Gap: ")
     add_bullet(tf, "Adding simple independent random noise per frame degrades coordinate utility for background games/apps without stopping attackers.", bold_prefix="Utility Degradation: ")
     add_bullet(tf, "The paper assumes simple attackers. It does not evaluate defenses against adaptive adversaries or geometric attacks like BackTree.", bold_prefix="Evaluation Deficit: ")
     add_bullet(tf, "Virtual keyboard typing detection must be context-aware; static noise injection would break normal AR/VR head tracking gestures.", bold_prefix="Usability Conflict: ", color=COLOR_ACCENT_RED)

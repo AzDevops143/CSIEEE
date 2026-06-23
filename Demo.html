@@ -768,6 +768,21 @@
             </div>
           </div>
           
+          <div class="form-group" style="margin-bottom: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <label>Simulation Bypasses</label>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; text-transform: none; font-size: 0.85rem; color: var(--text-primary); cursor: pointer;">
+                <input type="checkbox" id="chk-deviation" style="cursor: pointer; width: 16px; height: 16px;">
+                User Deviation Gestures (Gap 1)
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; text-transform: none; font-size: 0.85rem; color: var(--text-primary); cursor: pointer;">
+                <input type="checkbox" id="chk-tampering" style="cursor: pointer; width: 16px; height: 16px;">
+                External Sensor Tampering (Gap 2)
+              </label>
+            </div>
+            <span class="helper-text" style="margin-top: 6px;">Demonstrates that both active user-driven motions and external vibrations bypass SNOOPFINGER's passive threat model.</span>
+          </div>
+          
           <button type="button" id="btn-play" class="btn btn-primary">
             <span>Start Telemetry Stream</span>
           </button>
@@ -955,6 +970,21 @@
             </div>
 
             <div>
+              <h3 style="margin-bottom: 12px; color: #ffffff;">Critical Gaps in SNOOPFINGER's Attack Model</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 14px;">
+                While SNOOPFINGER's threat model holds under passive conditions, it contains two fundamental assumptions that can easily be exploited to neutralize the threat:
+              </p>
+              <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <li>
+                  <strong>User Deviation Gestures (Gap 1 - Manual Bypass)</strong>: The attack relies on passive, direct head trajectories matching key coordinates. If a user intentionally makes random or sweeping head movements (e.g. nodding, circular detours) while typing, the background attacker receives these gestures. The attack has no mechanism to differentiate real typing dwells from user-driven detour gestures, resulting in completely scrambled keystroke outputs.
+                </li>
+                <li>
+                  <strong>External Sensor Tampering & Environmental Noise (Gap 2 - Environmental Fragility)</strong>: The attack assumes that head orientation data represents only typing gestures. Physical vibrations (like riding a bumpy bus, walking) or hardware-level sensor noise injection alter the raw telemetry. The attack algorithm has no sensor-origin verification and cannot separate target key dwells from external vibrations, rendering the attack fragile outside a static environment.
+                </li>
+              </ul>
+            </div>
+
+            <div>
               <h3 style="margin-bottom: 12px; color: #ffffff;">Python Reference Implementation (Defender Core)</h3>
               <div class="code-block">
 <span class="comment"># Extract from casom_defense.py</span>
@@ -1040,12 +1070,51 @@
       
       const normalizedWord = word.toLowerCase().replace(/[^a-z]/g, '') + 'enter';
       
+      const simulateDeviation = document.getElementById('chk-deviation') ? document.getElementById('chk-deviation').checked : false;
+      const simulateTampering = document.getElementById('chk-tampering') ? document.getElementById('chk-tampering').checked : false;
+      
       for (let i = 0; i < normalizedWord.length; i++) {
         const ch = normalizedWord[i] === 'e' && normalizedWord.slice(i, i+5) === 'enter' ? 'enter' : normalizedWord[i];
         if (ch === 'e' && normalizedWord.slice(i, i+5) === 'enter') i += 4; // Skip rest of 'enter'
         
         if (!KEYBOARD_LAYOUT[ch]) continue;
         const target = KEYBOARD_LAYOUT[ch];
+        
+        // Simulating Gap 1: User Deviation Gestures (Fake detours and dwells)
+        if (simulateDeviation && i > 0 && rng() > 0.4) {
+          // Generate a fake detour target coordinate
+          const fakeTarget = [1.0 + rng() * 8.0, rng() > 0.5 ? 2.0 : -1.0];
+          
+          // Travel phase to fake target
+          const distFake = Math.hypot(fakeTarget[0] - cur[0], fakeTarget[1] - cur[1]);
+          const travelFakeSteps = Math.max(Math.floor(distFake * 6), 4);
+          for (let j = 0; j < travelFakeSteps; j++) {
+            const t = j / travelFakeSteps;
+            const px = cur[0] + (fakeTarget[0] - cur[0]) * t;
+            const py = cur[1] + (fakeTarget[1] - cur[1]) * t;
+            points.push({
+              x: px + (rng() - 0.5) * 0.02,
+              y: py + (rng() - 0.5) * 0.02,
+              isTyping: false,
+              char: 'None'
+            });
+          }
+          
+          // Dwell phase at fake target
+          const dwellFakeSteps = 15;
+          const startFakeIdx = points.length;
+          for (let j = 0; j < dwellFakeSteps; j++) {
+            points.push({
+              x: fakeTarget[0] + sampleGaussian(rng, 0, 0.03),
+              y: fakeTarget[1] + sampleGaussian(rng, 0, 0.03),
+              isTyping: true,
+              char: 'Fake'
+            });
+          }
+          segments.push([startFakeIdx, points.length]);
+          chars.push('Fake');
+          cur = fakeTarget;
+        }
         
         // 1. Travel Phase: linear path from current to target
         const dist = Math.hypot(target[0] - cur[0], target[1] - cur[1]);
@@ -1081,6 +1150,18 @@
         chars.push(ch);
         cur = target;
       }
+      
+      // Simulating Gap 2: External Sensor Tampering (oscillatory/vibrational noise)
+      if (simulateTampering) {
+        for (let idx = 0; idx < points.length; idx++) {
+          const t = idx * (1.0 / 72.0);
+          const vibX = Math.sin(2 * Math.PI * 15 * t) * 0.45 + sampleGaussian(rng, 0, 0.25);
+          const vibY = Math.cos(2 * Math.PI * 15 * t) * 0.45 + sampleGaussian(rng, 0, 0.25);
+          points[idx].x += vibX;
+          points[idx].y += vibY;
+        }
+      }
+      
       return { points, segments, chars };
     }
 
@@ -1646,6 +1727,8 @@
       });
       
       document.getElementById('btn-play').addEventListener('click', triggerSimulation);
+      document.getElementById('chk-deviation').addEventListener('change', triggerSimulation);
+      document.getElementById('chk-tampering').addEventListener('change', triggerSimulation);
       
       // Auto run first load
       triggerSimulation();
